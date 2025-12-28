@@ -116,52 +116,6 @@ def _process_chunks(file_bytes: bytes) -> Tuple[List[str], List[List[float]]]:
     return chunks, embeddings
 
 
-def _delete_local_files(filenames: Iterable[str]) -> None:
-    for filename in filenames:
-        if not filename:
-            continue
-        filepath = os.path.join(UPLOAD_DIR, filename)
-        if os.path.exists(filepath):
-            try:
-                os.remove(filepath)
-            except OSError as exc:
-                logger.warning("No se pudo eliminar el archivo %s: %s", filepath, exc)
-
-
-def delete_document(document_id: str, db) -> dict:
-    document = db.query(Document).filter(Document.document_id == document_id).first()
-    if not document:
-        raise HTTPException(404, "Documento no encontrado")
-
-    state.qdrant.delete(
-        collection_name=QDRANT_COLLECTION,
-        points_selector=Filter(
-            must=[
-                FieldCondition(
-                    key="document_id",
-                    match=MatchValue(value=document_id),
-                )
-            ]
-        ),
-    )
-
-    db.query(DocumentChunk).filter(
-        DocumentChunk.document_id == document_id
-    ).delete(synchronize_session=False)
-    db.query(DocumentVersion).filter(
-        DocumentVersion.document_id == document_id
-    ).delete(synchronize_session=False)
-    db.query(DocumentAudit).filter(
-        DocumentAudit.document_id == document_id
-    ).delete(synchronize_session=False)
-    db.query(Document).filter(
-        Document.document_id == document_id
-    ).delete(synchronize_session=False)
-
-    db.commit()
-    return {"document_id": document_id, "status": "deleted"}
-
-
 async def index_document(
     file: UploadFile,
     db,
@@ -191,10 +145,9 @@ async def index_document(
         safe_filename = file.filename or (title or "documento.pdf")
         document = Document(
             document_id=doc_id,
-            title=title or safe_filename,
+            title=title or file.filename,
             category=category,
             owner_area=owner_area,
-            filename=safe_filename,
             status="active",
             created_at=now,
         )
@@ -209,7 +162,6 @@ async def index_document(
             is_current=True,
             change_summary=change_summary,
             file_hash=file_hash,
-            filename=safe_filename,
             uploaded_at=now,
             deleted=False,
         ))
@@ -234,7 +186,7 @@ async def index_document(
         _upsert_qdrant_points(
             document_id=doc_id,
             version=version,
-            filename=safe_filename,
+            filename=file.filename,
             chunks=chunks,
             embeddings=embeddings,
         )
@@ -363,7 +315,6 @@ async def create_document_version(
                 .update({DocumentChunk.is_current: False})
             )
 
-        safe_filename = file.filename or "documento.pdf"
         db.add(DocumentVersion(
             version_id=version_id,
             document_id=document_id,
@@ -373,7 +324,6 @@ async def create_document_version(
             is_current=True,
             change_summary=change_summary,
             file_hash=file_hash,
-            filename=safe_filename,
             uploaded_at=now,
             deleted=False,
         ))
@@ -398,7 +348,7 @@ async def create_document_version(
         _upsert_qdrant_points(
             document_id=document_id,
             version=version,
-            filename=safe_filename,
+            filename=file.filename,
             chunks=chunks,
             embeddings=embeddings,
         )
@@ -447,7 +397,6 @@ def list_documents(db) -> List[dict]:
             & (DocumentVersion.is_current.is_(True))
             & (DocumentVersion.deleted.is_(False)),
         )
-        .filter(Document.status != "archived")
         .order_by(Document.created_at.desc())
         .all()
     )
@@ -504,12 +453,6 @@ def archive_document(document_id: str, db) -> dict:
     if not document:
         raise HTTPException(404, "Documento no encontrado")
 
-    versions = (
-        db.query(DocumentVersion)
-        .filter(DocumentVersion.document_id == document_id)
-        .all()
-    )
-
     now = datetime.utcnow()
     document.status = "archived"
 
@@ -535,7 +478,6 @@ def archive_document(document_id: str, db) -> dict:
     })
     _store_audit(db, "ARCHIVE_DOCUMENT", document_id, None)
     db.commit()
-    _delete_local_files({version.filename for version in versions})
     return {"document_id": document_id, "status": "archived"}
 
 
