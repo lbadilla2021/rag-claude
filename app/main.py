@@ -42,6 +42,19 @@ def startup():
             connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
+                    "ALTER COLUMN filename SET DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "UPDATE documents "
+                    "SET filename = COALESCE(filename, title, '') "
+                    "WHERE filename IS NULL"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS title VARCHAR NOT NULL DEFAULT ''"
                 )
             )
@@ -85,6 +98,31 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS document_versions "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ALTER COLUMN filename SET DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "UPDATE document_versions "
+                    "SET filename = COALESCE(filename, '') "
+                    "WHERE filename IS NULL"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT false"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT false"
                 )
             )
             connection.execute(

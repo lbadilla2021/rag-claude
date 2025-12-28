@@ -188,12 +188,13 @@ async def index_document(
         now = datetime.utcnow()
         file_hash = hashlib.sha256(file_bytes).hexdigest()
 
+        safe_filename = file.filename or (title or "documento.pdf")
         document = Document(
             document_id=doc_id,
-            title=title or file.filename,
+            title=title or safe_filename,
             category=category,
             owner_area=owner_area,
-            filename=file.filename,
+            filename=safe_filename,
             status="active",
             created_at=now,
         )
@@ -208,7 +209,7 @@ async def index_document(
             is_current=True,
             change_summary=change_summary,
             file_hash=file_hash,
-            filename=file.filename,
+            filename=safe_filename,
             uploaded_at=now,
             deleted=False,
         ))
@@ -233,7 +234,7 @@ async def index_document(
         _upsert_qdrant_points(
             document_id=doc_id,
             version=version,
-            filename=file.filename,
+            filename=safe_filename,
             chunks=chunks,
             embeddings=embeddings,
         )
@@ -362,6 +363,7 @@ async def create_document_version(
                 .update({DocumentChunk.is_current: False})
             )
 
+        safe_filename = file.filename or "documento.pdf"
         db.add(DocumentVersion(
             version_id=version_id,
             document_id=document_id,
@@ -371,7 +373,7 @@ async def create_document_version(
             is_current=True,
             change_summary=change_summary,
             file_hash=file_hash,
-            filename=file.filename,
+            filename=safe_filename,
             uploaded_at=now,
             deleted=False,
         ))
@@ -396,7 +398,7 @@ async def create_document_version(
         _upsert_qdrant_points(
             document_id=document_id,
             version=version,
-            filename=file.filename,
+            filename=safe_filename,
             chunks=chunks,
             embeddings=embeddings,
         )
