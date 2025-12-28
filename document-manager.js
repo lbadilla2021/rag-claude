@@ -74,7 +74,9 @@ class DocumentManager {
         });
         
         // Upload zone
-        this.elements.uploadZone.addEventListener('click', () => this.elements.fileInput.click());
+        this.elements.fileInput.addEventListener('click', () => {
+            this.elements.fileInput.value = '';
+        });
         this.elements.fileInput.addEventListener('change', (e) => this.handleFileSelection(e));
         
         // Drag and drop
@@ -415,6 +417,7 @@ class DocumentManager {
         this.elements.uploadFilesList.innerHTML = '';
         this.elements.metadataForm.style.display = 'none';
         this.elements.startUpload.disabled = true;
+        this.elements.fileInput.value = '';
         this.elements.uploadModal.classList.add('active');
     }
 
