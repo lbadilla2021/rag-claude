@@ -1,6 +1,7 @@
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import OperationalError
 
 from app.config import OPENAI_API_KEY, logger
@@ -31,6 +32,35 @@ def startup():
 
     try:
         Base.metadata.create_all(bind=engine)
+        inspector = inspect(engine)
+        tables = set(inspector.get_table_names())
+        if "documents" in tables:
+            columns = {column["name"] for column in inspector.get_columns("documents")}
+            missing = {
+                "title": "VARCHAR NOT NULL DEFAULT ''",
+                "category": "VARCHAR",
+                "owner_area": "VARCHAR",
+                "status": "VARCHAR NOT NULL DEFAULT 'active'",
+                "created_at": "TIMESTAMP NOT NULL DEFAULT NOW()",
+                "indexed_at": "TIMESTAMP",
+                "chunk_count": "INTEGER NOT NULL DEFAULT 0",
+            }
+            for column, ddl in missing.items():
+                if column not in columns:
+                    with engine.begin() as connection:
+                        connection.execute(
+                            text(f"ALTER TABLE documents ADD COLUMN {column} {ddl}")
+                        )
+        if "document_versions" in tables:
+            columns = {column["name"] for column in inspector.get_columns("document_versions")}
+            if "filename" not in columns:
+                with engine.begin() as connection:
+                    connection.execute(
+                        text(
+                            "ALTER TABLE document_versions "
+                            "ADD COLUMN filename VARCHAR NOT NULL DEFAULT ''"
+                        )
+                    )
         logger.info("✅ PostgreSQL listo")
     except OperationalError as exc:
         logger.error("❌ PostgreSQL no disponible", exc_info=exc)
