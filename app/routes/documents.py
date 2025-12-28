@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.get("/documents")
-def list_documents():
+def list_documents_route():
     db = SessionLocal()
     try:
         return list_documents(db)

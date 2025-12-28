@@ -42,6 +42,12 @@ def startup():
             connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS document_id VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
                     "ALTER COLUMN filename SET DEFAULT ''"
                 )
             )
@@ -152,6 +158,21 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS chunk_count INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "DO $$\n"
+                    "BEGIN\n"
+                    "  IF EXISTS (\n"
+                    "    SELECT 1 FROM information_schema.columns\n"
+                    "    WHERE table_name = 'documents' AND column_name = 'id'\n"
+                    "  ) THEN\n"
+                    "    UPDATE documents\n"
+                    "    SET document_id = COALESCE(document_id, id::text)\n"
+                    "    WHERE document_id IS NULL OR document_id = '';\n"
+                    "  END IF;\n"
+                    "END $$;"
                 )
             )
             connection.execute(
