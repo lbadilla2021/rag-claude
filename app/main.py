@@ -42,6 +42,12 @@ def startup():
             connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS document_id VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
                     "ALTER COLUMN filename SET DEFAULT ''"
                 )
             )
@@ -73,6 +79,60 @@ def startup():
             connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS owner VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS department VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS tags TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS description TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS is_indexable BOOLEAN NOT NULL DEFAULT true"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS file_size INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS file_type VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS file_path VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'"
                 )
             )
@@ -80,6 +140,12 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP"
                 )
             )
             connection.execute(
@@ -96,8 +162,57 @@ def startup():
             )
             connection.execute(
                 text(
+                    "DO $$\n"
+                    "BEGIN\n"
+                    "  IF EXISTS (\n"
+                    "    SELECT 1 FROM information_schema.columns\n"
+                    "    WHERE table_name = 'documents' AND column_name = 'id'\n"
+                    "  ) THEN\n"
+                    "    IF EXISTS (\n"
+                    "      SELECT 1 FROM information_schema.columns\n"
+                    "      WHERE table_name = 'documents'\n"
+                    "        AND column_name = 'id'\n"
+                    "        AND data_type IN ('integer', 'bigint', 'smallint')\n"
+                    "        AND column_default IS NULL\n"
+                    "    ) THEN\n"
+                    "      CREATE SEQUENCE IF NOT EXISTS documents_id_seq;\n"
+                    "      ALTER TABLE documents ALTER COLUMN id SET DEFAULT nextval('documents_id_seq');\n"
+                    "      PERFORM setval('documents_id_seq', COALESCE((SELECT MAX(id) FROM documents), 0));\n"
+                    "    END IF;\n"
+                    "  END IF;\n"
+                    "  IF EXISTS (\n"
+                    "    SELECT 1 FROM information_schema.columns\n"
+                    "    WHERE table_name = 'documents' AND column_name = 'id'\n"
+                    "  ) THEN\n"
+                    "    UPDATE documents\n"
+                    "    SET document_id = COALESCE(document_id, id::text)\n"
+                    "    WHERE document_id IS NULL OR document_id = '';\n"
+                    "  END IF;\n"
+                    "END $$;"
+                )
+            )
+            connection.execute(
+                text(
                     "ALTER TABLE IF EXISTS document_versions "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_path VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_size INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_type VARCHAR"
                 )
             )
             connection.execute(
