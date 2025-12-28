@@ -2,8 +2,8 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.db import SessionLocal
 from app.services.documents import (
+    archive_document,
     create_document_version,
-    delete_document,
     delete_document_version,
     get_document_detail,
     index_document,
@@ -91,7 +91,7 @@ async def add_document_version(
 def delete_document(document_id: str):
     db = SessionLocal()
     try:
-        return delete_document(document_id, db)
+        return archive_document(document_id, db)
     except HTTPException:
         db.rollback()
         raise
