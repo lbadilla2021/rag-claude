@@ -7,7 +7,7 @@ from app.services.documents import (
     delete_document_version,
     get_document_detail,
     index_document,
-    list_documents,
+    list_documents as list_documents_service,
 )
 
 router = APIRouter()
@@ -17,7 +17,7 @@ router = APIRouter()
 def list_documents():
     db = SessionLocal()
     try:
-        return list_documents(db)
+        return list_documents_service(db)
     finally:
         db.close()
 
