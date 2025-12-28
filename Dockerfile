@@ -28,6 +28,7 @@ RUN pip install --upgrade pip && \
 
 # Copiar backend
 COPY backend.py .
+COPY app ./app
 
 # Directorios persistentes
 RUN mkdir -p /app/uploads /app/logs && \
