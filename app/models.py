@@ -7,7 +7,8 @@ from app.db import Base
 class Document(Base):
     __tablename__ = "documents"
 
-    document_id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    document_id = Column(String, nullable=False, unique=True)
     title = Column(String, nullable=False)
     filename = Column(String, nullable=False, default="")
     category = Column(String, nullable=True)
