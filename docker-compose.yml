@@ -23,6 +23,7 @@ services:
       - ./document-manager.css:/usr/share/nginx/html/document-manager.css:ro
 
       - ./app.js:/usr/share/nginx/html/app.js:ro
+      - ./frontend:/usr/share/nginx/html/frontend:ro
       - ./document-manager.js:/usr/share/nginx/html/document-manager.js:ro
 
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro

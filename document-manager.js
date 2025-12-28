@@ -442,17 +442,12 @@ class DocumentManager {
     }
 
     isValidFile(file) {
-        const validTypes = [
-            'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'text/plain'
-        ];
-        
         const maxSize = 50 * 1024 * 1024; // 50 MB
-        
-        if (!validTypes.includes(file.type)) {
-            alert(`Tipo de archivo no válido: ${file.name}`);
+
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+        if (!isPdf) {
+            alert(`Tipo de archivo no válido: ${file.name}. Solo se aceptan PDF.`);
             return false;
         }
         
