@@ -6,10 +6,11 @@ from app.db import Base
 class Document(Base):
     __tablename__ = "documents"
 
-    document_id = Column(String, primary_key=True)
+    document_id = Column("id", String, primary_key=True)
     title = Column(String, nullable=False)
     category = Column(String, nullable=True)
     owner_area = Column(String, nullable=True)
+    filename = Column(String, nullable=False)
     status = Column(String, nullable=False)
     created_at = Column(DateTime, nullable=False)
     indexed_at = Column(DateTime)
@@ -27,6 +28,7 @@ class DocumentVersion(Base):
     is_current = Column(Boolean, nullable=False, default=False)
     change_summary = Column(Text)
     file_hash = Column(String, nullable=False)
+    filename = Column(String, nullable=False)
     uploaded_at = Column(DateTime, nullable=False)
     deleted = Column(Boolean, nullable=False, default=False)
 
