@@ -10,6 +10,7 @@ class Document(Base):
     title = Column(String, nullable=False)
     category = Column(String, nullable=True)
     owner_area = Column(String, nullable=True)
+    filename = Column(String, nullable=False)
     status = Column(String, nullable=False)
     created_at = Column(DateTime, nullable=False)
     indexed_at = Column(DateTime)

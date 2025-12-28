@@ -193,6 +193,7 @@ async def index_document(
             title=title or file.filename,
             category=category,
             owner_area=owner_area,
+            filename=file.filename,
             status="active",
             created_at=now,
         )

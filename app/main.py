@@ -36,6 +36,12 @@ def startup():
             connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS title VARCHAR NOT NULL DEFAULT ''"
                 )
             )
@@ -79,6 +85,18 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS document_versions "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT false"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT false"
                 )
             )
         logger.info("✅ PostgreSQL listo")
