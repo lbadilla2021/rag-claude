@@ -1,6 +1,7 @@
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from app.config import OPENAI_API_KEY, logger
@@ -31,6 +32,55 @@ def startup():
 
     try:
         Base.metadata.create_all(bind=engine)
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS title VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS category VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS owner_area VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS indexed_at TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS chunk_count INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
         logger.info("✅ PostgreSQL listo")
     except OperationalError as exc:
         logger.error("❌ PostgreSQL no disponible", exc_info=exc)
