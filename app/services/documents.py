@@ -3,7 +3,7 @@ import os
 import uuid
 from datetime import datetime
 from io import BytesIO
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Set, Tuple
 
 import openai
 from fastapi import HTTPException, UploadFile
@@ -114,6 +114,121 @@ def _process_chunks(file_bytes: bytes) -> Tuple[List[str], List[List[float]]]:
     chunks = splitter.split_text(text)
     embeddings = _build_embeddings(chunks)
     return chunks, embeddings
+
+
+def _collect_qdrant_filenames(document_id: str) -> Set[str]:
+    filenames: Set[str] = set()
+    next_offset = None
+    while True:
+        points, next_offset = state.qdrant.scroll(
+            collection_name=QDRANT_COLLECTION,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id",
+                        match=MatchValue(value=document_id),
+                    )
+                ]
+            ),
+            with_payload=True,
+            limit=100,
+            offset=next_offset,
+        )
+        for point in points:
+            payload = point.payload or {}
+            filename = payload.get("filename")
+            if filename:
+                filenames.add(filename)
+        if next_offset is None:
+            break
+    return filenames
+
+
+def _delete_local_files(
+    document_id: str,
+    filenames: Set[str],
+    file_hashes: Set[str],
+    db,
+) -> None:
+    deleted_paths = set()
+    for filename in filenames:
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+                deleted_paths.add(filepath)
+            except OSError as exc:
+                logger.warning("No se pudo eliminar el archivo %s: %s", filepath, exc)
+
+    if filenames or not file_hashes:
+        return
+
+    other_hashes = {
+        row[0]
+        for row in db.query(DocumentVersion.file_hash)
+        .filter(DocumentVersion.file_hash.in_(file_hashes))
+        .filter(DocumentVersion.document_id != document_id)
+        .all()
+    }
+    allowed_hashes = file_hashes - other_hashes
+    if not allowed_hashes:
+        return
+
+    for entry in os.listdir(UPLOAD_DIR):
+        filepath = os.path.join(UPLOAD_DIR, entry)
+        if not os.path.isfile(filepath) or filepath in deleted_paths:
+            continue
+        try:
+            with open(filepath, "rb") as handle:
+                file_hash = hashlib.sha256(handle.read()).hexdigest()
+            if file_hash in allowed_hashes:
+                os.remove(filepath)
+        except OSError as exc:
+            logger.warning("No se pudo eliminar el archivo %s: %s", filepath, exc)
+
+
+def delete_document(document_id: str, db) -> dict:
+    document = db.query(Document).filter(Document.document_id == document_id).first()
+    if not document:
+        raise HTTPException(404, "Documento no encontrado")
+
+    versions = (
+        db.query(DocumentVersion)
+        .filter(DocumentVersion.document_id == document_id)
+        .all()
+    )
+    file_hashes = {version.file_hash for version in versions}
+    filenames = _collect_qdrant_filenames(document_id)
+
+    state.qdrant.delete(
+        collection_name=QDRANT_COLLECTION,
+        points_selector=Filter(
+            must=[
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=document_id),
+                )
+            ]
+        ),
+    )
+
+    _delete_local_files(document_id, filenames, file_hashes, db)
+
+    db.query(DocumentChunk).filter(
+        DocumentChunk.document_id == document_id
+    ).delete(synchronize_session=False)
+    db.query(DocumentVersion).filter(
+        DocumentVersion.document_id == document_id
+    ).delete(synchronize_session=False)
+    db.query(DocumentAudit).filter(
+        DocumentAudit.document_id == document_id
+    ).delete(synchronize_session=False)
+    db.query(Document).filter(
+        Document.document_id == document_id
+    ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"document_id": document_id, "status": "deleted"}
 
 
 async def index_document(
