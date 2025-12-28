@@ -107,8 +107,6 @@
                     <select id="typeFilter" class="filter-select">
                         <option value="">Todos los tipos</option>
                         <option value="pdf">PDF</option>
-                        <option value="docx">Word (DOCX)</option>
-                        <option value="pptx">PowerPoint (PPTX)</option>
                         <option value="txt">Texto (TXT)</option>
                     </select>
 
@@ -185,8 +183,8 @@
                     </svg>
                     <h3>Arrastra archivos aquí</h3>
                     <p>o haz clic para seleccionar</p>
-                    <p class="upload-hint">Formatos: PDF, DOCX, PPTX, TXT (Máx. 50 MB)</p>
-                    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.pptx,.txt,.doc,.ppt">
+                    <p class="upload-hint">Formatos: PDF, TXT (Máx. 50 MB)</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.txt">
                 </div>
 
                 <div class="upload-files-list" id="uploadFilesList"></div>
