@@ -118,34 +118,33 @@ class DocumentManager {
             
             clearTimeout(timeoutId);
             
-            if (response.ok) {
-                const rawDocs = await response.json();
-                this.documents = rawDocs.map(doc => ({
-                    ...doc,
-
-                    // normalización mínima para que el UI no falle
-                    id: doc.document_id || doc.id,
-                    filename: doc.filename || doc.title || 'Documento sin título',
-                    size: Number.isFinite(doc.size) ? doc.size : 0,
-                    type: (doc.type || 'pdf').toLowerCase(),
-                    tags: Array.isArray(doc.tags) ? doc.tags : [],
-                    description: doc.description || '',
-                    owner: doc.owner || '—',
-                    created_at: doc.created_at || doc.effective_from,
-                    modified_at: doc.modified_at || doc.updated_at || doc.createdAt,
-
-                    // compatibilidad de estado
-                    status: doc.status === 'indexed' ? 'completed' : doc.status
-                }));
-
-                console.log('✓ Documentos cargados desde API:', this.documents.length);
-            } else {
-                console.warn('API returned error, using mock data');
-                this.documents = this.getMockDocuments();
+            if (!response.ok) {
+                throw new Error('Error cargando documentos');
             }
+
+            const rawDocs = await response.json();
+            this.documents = rawDocs.map(doc => ({
+                ...doc,
+
+                // normalización mínima para que el UI no falle
+                id: doc.document_id || doc.id,
+                filename: doc.filename || doc.title || 'Documento sin título',
+                size: Number.isFinite(doc.size) ? doc.size : 0,
+                type: (doc.type || 'pdf').toLowerCase(),
+                tags: Array.isArray(doc.tags) ? doc.tags : [],
+                description: doc.description || '',
+                owner: doc.owner || '—',
+                created_at: doc.created_at || doc.effective_from,
+                modified_at: doc.modified_at || doc.updated_at || doc.createdAt,
+
+                // compatibilidad de estado
+                status: doc.status === 'indexed' ? 'completed' : doc.status
+            }));
+
+            console.log('✓ Documentos cargados desde API:', this.documents.length);
         } catch (error) {
-            console.warn('API not available, using mock data:', error.message);
-            this.documents = this.getMockDocuments();
+            console.error('Error cargando documentos:', error.message);
+            this.documents = [];
         } finally {
             console.log('Total documents loaded:', this.documents.length);
             this.renderDocuments();
@@ -453,8 +452,6 @@ class DocumentManager {
     isValidFile(file) {
         const validTypes = [
             'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'text/plain'
         ];
         
@@ -636,13 +633,7 @@ class DocumentManager {
             }
         } catch (error) {
             console.error('Error saving metadata:', error);
-            alert('Error al guardar metadatos. Los cambios se aplicarán localmente.');
-            
-            // Update local copy
-            Object.assign(this.currentDocument, updatedMetadata);
-            this.currentDocument.modified_at = new Date().toISOString();
-            this.closeEditModal();
-            this.renderDocuments();
+            alert('Error al guardar metadatos. Por favor intenta nuevamente.');
         }
     }
 
@@ -694,10 +685,7 @@ class DocumentManager {
             }
         } catch (error) {
             console.error('Error deleting document:', error);
-            // Simulate deletion locally
-            this.documents = this.documents.filter(d => d.id !== docId);
-            this.renderDocuments();
-            this.updateStats();
+            alert('Error al eliminar documento. Por favor intenta nuevamente.');
         }
     }
 
