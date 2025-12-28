@@ -6,7 +6,7 @@ from app.db import Base
 class Document(Base):
     __tablename__ = "documents"
 
-    document_id = Column(String, primary_key=True)
+    document_id = Column("id", String, primary_key=True)
     title = Column(String, nullable=False)
     category = Column(String, nullable=True)
     owner_area = Column(String, nullable=True)
