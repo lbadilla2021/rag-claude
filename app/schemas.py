@@ -21,3 +21,17 @@ class AskSource(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     sources: list[AskSource]
+
+
+class DocumentUpdate(BaseModel):
+    title: str | None = None
+    filename: str | None = None
+    category: str | None = None
+    status: str | None = None
+    owner: str | None = None
+    owner_area: str | None = None
+    department: str | None = None
+    tags: list[str] | None = None
+    description: str | None = None
+    public: bool | None = None
+    indexable: bool | None = None
