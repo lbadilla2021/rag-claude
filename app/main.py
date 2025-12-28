@@ -1,7 +1,7 @@
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from app.config import OPENAI_API_KEY, logger
@@ -32,35 +32,55 @@ def startup():
 
     try:
         Base.metadata.create_all(bind=engine)
-        inspector = inspect(engine)
-        tables = set(inspector.get_table_names())
-        if "documents" in tables:
-            columns = {column["name"] for column in inspector.get_columns("documents")}
-            missing = {
-                "title": "VARCHAR NOT NULL DEFAULT ''",
-                "category": "VARCHAR",
-                "owner_area": "VARCHAR",
-                "status": "VARCHAR NOT NULL DEFAULT 'active'",
-                "created_at": "TIMESTAMP NOT NULL DEFAULT NOW()",
-                "indexed_at": "TIMESTAMP",
-                "chunk_count": "INTEGER NOT NULL DEFAULT 0",
-            }
-            for column, ddl in missing.items():
-                if column not in columns:
-                    with engine.begin() as connection:
-                        connection.execute(
-                            text(f"ALTER TABLE documents ADD COLUMN {column} {ddl}")
-                        )
-        if "document_versions" in tables:
-            columns = {column["name"] for column in inspector.get_columns("document_versions")}
-            if "filename" not in columns:
-                with engine.begin() as connection:
-                    connection.execute(
-                        text(
-                            "ALTER TABLE document_versions "
-                            "ADD COLUMN filename VARCHAR NOT NULL DEFAULT ''"
-                        )
-                    )
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS title VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS category VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS owner_area VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS indexed_at TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS chunk_count INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
         logger.info("✅ PostgreSQL listo")
     except OperationalError as exc:
         logger.error("❌ PostgreSQL no disponible", exc_info=exc)
