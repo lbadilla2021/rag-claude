@@ -453,8 +453,6 @@ class DocumentManager {
     isValidFile(file) {
         const validTypes = [
             'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'text/plain'
         ];
         

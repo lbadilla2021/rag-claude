@@ -73,6 +73,60 @@ def startup():
             connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS owner VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS department VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS tags TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS description TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS is_indexable BOOLEAN NOT NULL DEFAULT true"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS file_size INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS file_type VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS file_path VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'"
                 )
             )
@@ -80,6 +134,12 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS documents "
+                    "ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP"
                 )
             )
             connection.execute(
@@ -98,6 +158,24 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS document_versions "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_path VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_size INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_type VARCHAR"
                 )
             )
             connection.execute(
