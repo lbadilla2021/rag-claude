@@ -1,5 +1,17 @@
+const resolveApiBaseUrl = () => {
+    if (typeof window === 'undefined') {
+        return 'http://localhost:8000/api';
+    }
+
+    const { protocol, hostname } = window.location;
+    const apiProtocol = protocol === 'https:' ? 'https:' : 'http:';
+    const apiHost = hostname || 'localhost';
+
+    return `${apiProtocol}//${apiHost}:8000/api`;
+};
+
 export const CONFIG = {
-    API_BASE_URL: 'http://65.108.150.100:8000/api',
+    API_BASE_URL: resolveApiBaseUrl(),
     AGENTS: {
         general: {
             name: 'General Assistant',
