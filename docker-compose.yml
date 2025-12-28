@@ -1,0 +1,111 @@
+version: "3.8"
+
+services:
+
+  # --------------------------------------
+  # Frontend (Nginx estático)
+  # --------------------------------------
+  frontend:
+    image: nginx:alpine
+    container_name: apex-ai-frontend
+    ports:
+      - "8900:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./chat.html:/usr/share/nginx/html/chat.html:ro
+      - ./document-manager.html:/usr/share/nginx/html/document-manager.html:ro
+      - ./welcome.html:/usr/share/nginx/html/welcome.html:ro
+      - ./test.html:/usr/share/nginx/html/test.html:ro
+      - ./diagnostico.html:/usr/share/nginx/html/diagnostico.html:ro
+      - ./diagnostico-gestor.html:/usr/share/nginx/html/diagnostico-gestor.html:ro
+
+      - ./styles.css:/usr/share/nginx/html/styles.css:ro
+      - ./document-manager.css:/usr/share/nginx/html/document-manager.css:ro
+
+      - ./app.js:/usr/share/nginx/html/app.js:ro
+      - ./document-manager.js:/usr/share/nginx/html/document-manager.js:ro
+
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - apex-network
+    restart: unless-stopped
+
+  # --------------------------------------
+  # PostgreSQL (metadata)
+  # --------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: apex-postgres
+    environment:
+      POSTGRES_USER: apex_user
+      POSTGRES_PASSWORD: apex_password
+      POSTGRES_DB: apex_rag
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apex_user -d apex_rag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apex-network
+
+
+  # --------------------------------------
+  # Qdrant (vector database)
+  # --------------------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: apex-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - apex-network
+    restart: unless-stopped
+
+  # --------------------------------------
+  # Backend FastAPI RAG
+  # --------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apex-ai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - QDRANT_HOST=apex-qdrant
+      - QDRANT_PORT=6333
+      - EMBEDDING_MODEL=text-embedding-3-small
+
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    networks:
+      - apex-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  apex-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  qdrant_data:

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico - Gestor Documental</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #3b82f6;
+        }
+        
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #e2e8f0;
+        }
+        
+        .status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status.success { background: #10b981; }
+        .status.error { background: #ef4444; }
+        
+        .code {
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #94a3b8;
+            white-space: pre-wrap;
+        }
+        
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 12px;
+            margin-top: 16px;
+        }
+        
+        .button:hover {
+            background: #2563eb;
+        }
+        
+        .result {
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 6px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico del Gestor Documental</h1>
+        <p style="color: #94a3b8; margin-bottom: 40px;">Pruebas automáticas para identificar el problema</p>
+        
+        <div class="test-section">
+            <h2>1. Archivos Necesarios</h2>
+            <div id="filesTest"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. JavaScript Cargado</h2>
+            <div id="jsTest"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Datos Mock</h2>
+            <div id="mockTest"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. API Backend</h2>
+            <div id="apiTest"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. Elementos DOM</h2>
+            <div id="domTest"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>6. Consola del Navegador</h2>
+            <div class="code" id="consoleErrors">Revisa la consola del navegador (F12) para ver errores</div>
+            <button class="button" onclick="window.open('/document-manager.html', '_blank')">
+                Abrir Gestor en Nueva Pestaña
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Resultado del Diagnóstico</h2>
+            <div class="code" id="diagnosis"></div>
+        </div>
+    </div>
+
+    <script>
+        const results = {
+            files: false,
+            js: false,
+            mock: false,
+            api: false,
+            dom: false
+        };
+        
+        // Test 1: Verificar archivos
+        async function testFiles() {
+            const filesTest = document.getElementById('filesTest');
+            const files = [
+                'document-manager.html',
+                'document-manager.css',
+                'document-manager.js'
+            ];
+            
+            let html = '';
+            let allOk = true;
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    const ok = response.ok;
+                    allOk = allOk && ok;
+                    html += `<div class="result">
+                        <span class="status ${ok ? 'success' : 'error'}"></span>
+                        ${file}: ${ok ? '✓ OK' : '✗ NO ENCONTRADO'}
+                    </div>`;
+                } catch (error) {
+                    allOk = false;
+                    html += `<div class="result">
+                        <span class="status error"></span>
+                        ${file}: ✗ ERROR (${error.message})
+                    </div>`;
+                }
+            }
+            
+            filesTest.innerHTML = html;
+            results.files = allOk;
+            updateDiagnosis();
+        }
+        
+        // Test 2: Verificar JavaScript
+        function testJavaScript() {
+            const jsTest = document.getElementById('jsTest');
+            
+            // Cargar document-manager.js dinámicamente
+            const script = document.createElement('script');
+            script.src = 'document-manager.js';
+            script.onload = () => {
+                const hasDocumentManager = typeof DocumentManager !== 'undefined';
+                results.js = hasDocumentManager;
+                
+                jsTest.innerHTML = `<div class="result">
+                    <span class="status ${hasDocumentManager ? 'success' : 'error'}"></span>
+                    DocumentManager class: ${hasDocumentManager ? '✓ CARGADA' : '✗ NO ENCONTRADA'}
+                </div>`;
+                
+                if (hasDocumentManager) {
+                    testMock();
+                    testDOM();
+                }
+                
+                updateDiagnosis();
+            };
+            script.onerror = () => {
+                results.js = false;
+                jsTest.innerHTML = `<div class="result">
+                    <span class="status error"></span>
+                    ✗ Error al cargar document-manager.js
+                </div>`;
+                updateDiagnosis();
+            };
+            
+            document.body.appendChild(script);
+        }
+        
+        // Test 3: Verificar datos mock
+        function testMock() {
+            const mockTest = document.getElementById('mockTest');
+            
+            try {
+                // Crear instancia temporal
+                const tempManager = new DocumentManager();
+                const mockDocs = tempManager.getMockDocuments();
+                
+                results.mock = Array.isArray(mockDocs) && mockDocs.length > 0;
+                
+                mockTest.innerHTML = `<div class="result">
+                    <span class="status ${results.mock ? 'success' : 'error'}"></span>
+                    Documentos mock: ${results.mock ? `✓ ${mockDocs.length} documentos` : '✗ NO DISPONIBLES'}
+                </div>
+                <div class="code">${JSON.stringify(mockDocs[0], null, 2).substring(0, 300)}...</div>`;
+            } catch (error) {
+                results.mock = false;
+                mockTest.innerHTML = `<div class="result">
+                    <span class="status error"></span>
+                    ✗ Error: ${error.message}
+                </div>`;
+            }
+            
+            updateDiagnosis();
+        }
+        
+        // Test 4: Verificar API
+        async function testAPI() {
+            const apiTest = document.getElementById('apiTest');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/documents');
+                results.api = response.ok;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    apiTest.innerHTML = `<div class="result">
+                        <span class="status success"></span>
+                        API Backend: ✓ CONECTADA (${data.length} documentos)
+                    </div>`;
+                } else {
+                    apiTest.innerHTML = `<div class="result">
+                        <span class="status error"></span>
+                        API Backend: ✗ Error ${response.status}
+                    </div>
+                    <p style="color: #94a3b8; margin-top: 8px;">
+                        Nota: El sistema debería funcionar en modo MOCK sin backend
+                    </p>`;
+                }
+            } catch (error) {
+                results.api = false;
+                apiTest.innerHTML = `<div class="result">
+                    <span class="status error"></span>
+                    API Backend: ✗ NO DISPONIBLE
+                </div>
+                <p style="color: #94a3b8; margin-top: 8px;">
+                    Nota: El sistema debería funcionar en modo MOCK sin backend
+                </p>`;
+            }
+            
+            updateDiagnosis();
+        }
+        
+        // Test 5: Verificar elementos DOM en gestor
+        function testDOM() {
+            const domTest = document.getElementById('domTest');
+            
+            // Abrir gestor en iframe invisible para verificar DOM
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = 'document-manager.html';
+            
+            iframe.onload = () => {
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                    const required = [
+                        'documentsContainer',
+                        'uploadBtn',
+                        'searchInput'
+                    ];
+                    
+                    let html = '';
+                    let allFound = true;
+                    
+                    for (const id of required) {
+                        const exists = doc.getElementById(id) !== null;
+                        allFound = allFound && exists;
+                        html += `<div class="result">
+                            <span class="status ${exists ? 'success' : 'error'}"></span>
+                            #${id}: ${exists ? '✓ EXISTE' : '✗ NO ENCONTRADO'}
+                        </div>`;
+                    }
+                    
+                    results.dom = allFound;
+                    domTest.innerHTML = html;
+                    
+                    document.body.removeChild(iframe);
+                    updateDiagnosis();
+                } catch (error) {
+                    results.dom = false;
+                    domTest.innerHTML = `<div class="result">
+                        <span class="status error"></span>
+                        ✗ Error: ${error.message}
+                    </div>`;
+                    updateDiagnosis();
+                }
+            };
+            
+            document.body.appendChild(iframe);
+        }
+        
+        // Actualizar diagnóstico
+        function updateDiagnosis() {
+            const diagnosis = document.getElementById('diagnosis');
+            
+            let message = '';
+            
+            if (!results.files) {
+                message = `❌ PROBLEMA: Archivos faltantes
+                
+Los archivos del gestor documental no están accesibles.
+
+SOLUCIÓN:
+1. Verifica que estos archivos estén en docker-compose.yml:
+   - ./document-manager.html:/usr/share/nginx/html/document-manager.html:ro
+   - ./document-manager.css:/usr/share/nginx/html/document-manager.css:ro
+   - ./document-manager.js:/usr/share/nginx/html/document-manager.js:ro
+
+2. Reinicia Docker:
+   docker-compose restart frontend`;
+            } else if (!results.js) {
+                message = `❌ PROBLEMA: JavaScript no carga
+                
+El archivo document-manager.js no se está cargando correctamente.
+
+SOLUCIÓN:
+1. Verifica en la consola del navegador (F12) si hay errores
+2. Verifica que el archivo esté en docker-compose.yml
+3. Prueba acceder directamente a:
+   http://65.108.150.100:8900/document-manager.js`;
+            } else if (!results.mock) {
+                message = `❌ PROBLEMA: Datos mock no disponibles
+                
+La función getMockDocuments() no está funcionando.
+
+SOLUCIÓN:
+Hay un error en el código JavaScript. Revisa la consola del navegador.`;
+            } else if (!results.dom) {
+                message = `❌ PROBLEMA: Elementos DOM faltantes
+                
+Los elementos HTML necesarios no se encuentran en la página.
+
+SOLUCIÓN:
+Verifica que document-manager.html esté completo y correctamente cargado.`;
+            } else {
+                message = `✅ TODO ESTÁ BIEN
+                
+Todos los componentes están funcionando correctamente.
+
+El gestor debería mostrar ${results.mock ? '5' : '0'} documentos de ejemplo.
+
+Si no ves documentos en el gestor:
+1. Abre el gestor de documentos
+2. Presiona F12 → Console
+3. Busca errores en rojo
+4. Comparte la captura de pantalla`;
+            }
+            
+            diagnosis.textContent = message;
+        }
+        
+        // Ejecutar tests
+        async function runAllTests() {
+            await testFiles();
+            setTimeout(testJavaScript, 500);
+            setTimeout(testAPI, 1000);
+        }
+        
+        runAllTests();
+    </script>
+</body>
+</html>

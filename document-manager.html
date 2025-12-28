@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Documental - Apex AI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="document-manager.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <span>Apex AI</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Chat IA
+                </a>
+                <a href="document-manager.html" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    Gestor Documental
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalDocs">0</span>
+                        <span class="stat-label">Documentos</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalSize">0 MB</span>
+                        <span class="stat-label">Almacenado</span>
+                    </div>
+                </div>
+                <div class="user-profile">
+                    <div class="avatar">LA</div>
+                    <span>Luciano Admin</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="doc-header">
+                <div class="header-left">
+                    <h1>Gestor Documental</h1>
+                    <p class="header-subtitle">Administra documentos para el sistema RAG</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="refreshBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Actualizar
+                    </button>
+                    <button class="btn-primary" id="uploadBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Subir Documentos
+                    </button>
+                </div>
+            </header>
+
+            <!-- Filters Bar -->
+            <div class="filters-bar">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Buscar documentos...">
+                </div>
+
+                <div class="filter-group">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">Todas las categorías</option>
+                        <option value="legal">Legal</option>
+                        <option value="hr">Recursos Humanos</option>
+                        <option value="training">Capacitación</option>
+                        <option value="technical">Técnico</option>
+                        <option value="general">General</option>
+                    </select>
+
+                    <select id="typeFilter" class="filter-select">
+                        <option value="">Todos los tipos</option>
+                        <option value="pdf">PDF</option>
+                        <option value="docx">Word (DOCX)</option>
+                        <option value="pptx">PowerPoint (PPTX)</option>
+                        <option value="txt">Texto (TXT)</option>
+                    </select>
+
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">Todos los estados</option>
+                        <option value="active">Activo</option>
+                        <option value="processing">Procesando</option>
+                        <option value="error">Error</option>
+                        <option value="archived">Archivado</option>
+                    </select>
+                </div>
+
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="grid">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Documents Grid/List -->
+            <div class="documents-container grid-view" id="documentsContainer">
+                <!-- Documents will be inserted here dynamically -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                </svg>
+                <h2>No hay documentos</h2>
+                <p>Comienza subiendo tu primer documento al sistema</p>
+                <button class="btn-primary" onclick="document.getElementById('uploadBtn').click()">
+                    Subir Documento
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Subir Documentos</h2>
+                <button class="modal-close" id="closeUploadModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="upload-zone" id="uploadZone">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h3>Arrastra archivos aquí</h3>
+                    <p>o haz clic para seleccionar</p>
+                    <p class="upload-hint">Formatos: PDF, DOCX, PPTX, TXT (Máx. 50 MB)</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.pptx,.txt,.doc,.ppt">
+                </div>
+
+                <div class="upload-files-list" id="uploadFilesList"></div>
+
+                <div class="metadata-form" id="metadataForm" style="display: none;">
+                    <h3>Metadatos del Documento</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Categoría *</label>
+                            <select id="docCategory" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="legal">Legal</option>
+                                <option value="hr">Recursos Humanos</option>
+                                <option value="training">Capacitación</option>
+                                <option value="technical">Técnico</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Propietario *</label>
+                            <input type="text" id="docOwner" placeholder="Ej: Luciano Araneda" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Versión</label>
+                            <input type="text" id="docVersion" placeholder="Ej: 1.0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Departamento</label>
+                            <input type="text" id="docDepartment" placeholder="Ej: Legal, RRHH">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Etiquetas</label>
+                        <input type="text" id="docTags" placeholder="Separadas por comas: ley karin, acoso, protocolo">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="docDescription" rows="3" placeholder="Breve descripción del contenido..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="docPublic">
+                                <span>Documento público (visible para todos los agentes)</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="docIndexable" checked>
+                                <span>Indexar en base vectorial (RAG)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelUpload">Cancelar</button>
+                <button class="btn-primary" id="startUpload" disabled>Subir Documentos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Metadata Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Metadatos</h2>
+                <button class="modal-close" id="closeEditModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="document-preview" id="editDocPreview"></div>
+
+                <div class="metadata-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre del archivo</label>
+                            <input type="text" id="editFileName" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <input type="text" id="editFileType" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Categoría *</label>
+                            <select id="editCategory" required>
+                                <option value="legal">Legal</option>
+                                <option value="hr">Recursos Humanos</option>
+                                <option value="training">Capacitación</option>
+                                <option value="technical">Técnico</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Estado</label>
+                            <select id="editStatus">
+                                <option value="active">Activo</option>
+                                <option value="archived">Archivado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Propietario *</label>
+                            <input type="text" id="editOwner" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Departamento</label>
+                            <input type="text" id="editDepartment">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Versión</label>
+                            <input type="text" id="editVersion">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tamaño</label>
+                            <input type="text" id="editSize" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Etiquetas</label>
+                        <input type="text" id="editTags">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="editDescription" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Creado</label>
+                            <input type="text" id="editCreated" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Última modificación</label>
+                            <input type="text" id="editModified" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="editPublic">
+                                <span>Documento público</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="editIndexable">
+                                <span>Indexar en base vectorial</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelEdit">Cancelar</button>
+                <button class="btn-primary" id="saveEdit">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="document-manager.js"></script>
+</body>
+</html>

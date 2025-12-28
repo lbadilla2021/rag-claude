@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico - Apex AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #3b82f6;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+        }
+        
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #e2e8f0;
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .status.success { background: #10b981; }
+        .status.error { background: #ef4444; }
+        .status.loading { background: #f59e0b; }
+        
+        .test-name {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .test-result {
+            font-size: 12px;
+            color: #94a3b8;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .code {
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 12px;
+            margin-top: 16px;
+        }
+        
+        .button:hover {
+            background: #2563eb;
+        }
+        
+        .button.secondary {
+            background: #334155;
+        }
+        
+        .button.secondary:hover {
+            background: #475569;
+        }
+        
+        .alert {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #6ee7b7;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico del Sistema</h1>
+        <p class="subtitle">Detectando problemas de carga y configuración</p>
+        
+        <div id="urlInfo" class="info">
+            <strong>URL Actual:</strong> <span id="currentUrl"></span><br>
+            <strong>Ruta Base:</strong> <span id="basePath"></span>
+        </div>
+        
+        <div class="test-section">
+            <h2>📄 Archivos HTML</h2>
+            <div id="htmlTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎨 Archivos CSS</h2>
+            <div id="cssTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>⚙️ Archivos JavaScript</h2>
+            <div id="jsTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔗 Prueba de Navegación</h2>
+            <p style="margin-bottom: 16px; color: #cbd5e1;">Haz clic en estos botones para probar la navegación:</p>
+            <button class="button" onclick="testNavigation('index.html')">Ir a Chat (index.html)</button>
+            <button class="button" onclick="testNavigation('document-manager.html')">Ir a Gestor (document-manager.html)</button>
+            <button class="button secondary" onclick="testNavigation('./')">Ir a raíz (./)</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Reporte de Errores</h2>
+            <div id="errorReport" class="code"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>✅ Soluciones Sugeridas</h2>
+            <div id="solutions"></div>
+        </div>
+    </div>
+
+    <script>
+        const errors = [];
+        const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        
+        // Mostrar URL info
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('basePath').textContent = basePath;
+        
+        // Archivos a probar
+        const files = {
+            html: ['index.html', 'document-manager.html', 'chat.html', 'welcome.html'],
+            css: ['styles.css', 'document-manager.css'],
+            js: ['app.js', 'document-manager.js']
+        };
+        
+        // Función para probar si un archivo existe
+        async function testFile(filename) {
+            try {
+                const response = await fetch(basePath + filename, { method: 'HEAD' });
+                return {
+                    exists: response.ok,
+                    status: response.status,
+                    statusText: response.statusText
+                };
+            } catch (error) {
+                return {
+                    exists: false,
+                    status: 0,
+                    statusText: error.message
+                };
+            }
+        }
+        
+        // Función para crear item de test
+        function createTestItem(filename, result) {
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            
+            const status = document.createElement('div');
+            status.className = 'status ' + (result.exists ? 'success' : 'error');
+            
+            const name = document.createElement('div');
+            name.className = 'test-name';
+            name.textContent = filename;
+            
+            const resultText = document.createElement('div');
+            resultText.className = 'test-result';
+            resultText.textContent = result.exists ? `✓ ${result.status}` : `✗ ${result.status} - ${result.statusText}`;
+            
+            item.appendChild(status);
+            item.appendChild(name);
+            item.appendChild(resultText);
+            
+            if (!result.exists) {
+                errors.push({
+                    file: filename,
+                    status: result.status,
+                    message: result.statusText
+                });
+            }
+            
+            return item;
+        }
+        
+        // Función para probar navegación
+        function testNavigation(target) {
+            console.log('Navegando a:', basePath + target);
+            window.location.href = basePath + target;
+        }
+        
+        // Ejecutar tests
+        async function runTests() {
+            // Test HTML files
+            const htmlContainer = document.getElementById('htmlTests');
+            for (const file of files.html) {
+                const result = await testFile(file);
+                htmlContainer.appendChild(createTestItem(file, result));
+            }
+            
+            // Test CSS files
+            const cssContainer = document.getElementById('cssTests');
+            for (const file of files.css) {
+                const result = await testFile(file);
+                cssContainer.appendChild(createTestItem(file, result));
+            }
+            
+            // Test JS files
+            const jsContainer = document.getElementById('jsTests');
+            for (const file of files.js) {
+                const result = await testFile(file);
+                jsContainer.appendChild(createTestItem(file, result));
+            }
+            
+            // Mostrar reporte de errores
+            const errorReport = document.getElementById('errorReport');
+            if (errors.length === 0) {
+                errorReport.innerHTML = '<div style="color: #10b981;">✓ Todos los archivos se cargaron correctamente</div>';
+            } else {
+                errorReport.textContent = JSON.stringify(errors, null, 2);
+            }
+            
+            // Generar soluciones
+            generateSolutions();
+        }
+        
+        function generateSolutions() {
+            const solutions = document.getElementById('solutions');
+            
+            if (errors.length === 0) {
+                solutions.innerHTML = `
+                    <div class="success-box">
+                        <strong>✓ No se detectaron problemas de archivos</strong><br><br>
+                        Si la navegación no funciona, el problema puede ser:<br>
+                        • JavaScript deshabilitado<br>
+                        • Bloqueador de contenido activo<br>
+                        • Configuración del servidor web<br><br>
+                        <strong>Prueba:</strong><br>
+                        1. Abre la consola del navegador (F12)<br>
+                        2. Ve a la pestaña "Console"<br>
+                        3. Busca errores en rojo<br>
+                        4. Copia los errores y compártelos
+                    </div>
+                `;
+            } else {
+                const missingFiles = errors.map(e => e.file).join(', ');
+                solutions.innerHTML = `
+                    <div class="alert">
+                        <strong>⚠️ Archivos Faltantes Detectados</strong><br><br>
+                        Los siguientes archivos no se encontraron:<br>
+                        <strong>${missingFiles}</strong><br><br>
+                        <strong>Solución:</strong><br>
+                        1. Verifica que estos archivos estén en la misma carpeta que este archivo de diagnóstico<br>
+                        2. Verifica los permisos: <code>chmod 644 *.html *.css *.js</code><br>
+                        3. Verifica que el servidor web pueda acceder a estos archivos<br>
+                        4. Si usas Nginx/Apache, verifica la ruta de DocumentRoot
+                    </div>
+                `;
+            }
+        }
+        
+        // Ejecutar tests al cargar
+        runTests();
+        
+        // Capturar errores de JavaScript
+        window.addEventListener('error', function(e) {
+            console.error('Error capturado:', e);
+        });
+        
+        // Información adicional
+        console.log('=== INFORMACIÓN DE DIAGNÓSTICO ===');
+        console.log('URL:', window.location.href);
+        console.log('Base Path:', basePath);
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Cookies enabled:', navigator.cookieEnabled);
+    </script>
+</body>
+</html>
