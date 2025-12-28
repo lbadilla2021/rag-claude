@@ -27,6 +27,7 @@ class DocumentVersion(Base):
     is_current = Column(Boolean, nullable=False, default=False)
     change_summary = Column(Text)
     file_hash = Column(String, nullable=False)
+    filename = Column(String, nullable=False)
     uploaded_at = Column(DateTime, nullable=False)
     deleted = Column(Boolean, nullable=False, default=False)
 
