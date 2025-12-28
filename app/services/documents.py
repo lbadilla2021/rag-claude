@@ -142,6 +142,7 @@ async def index_document(
         now = datetime.utcnow()
         file_hash = hashlib.sha256(file_bytes).hexdigest()
 
+        safe_filename = file.filename or (title or "documento.pdf")
         document = Document(
             document_id=doc_id,
             title=title or file.filename,
