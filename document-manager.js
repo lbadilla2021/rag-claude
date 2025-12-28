@@ -124,11 +124,15 @@ class DocumentManager {
                     ...doc,
 
                     // normalización mínima para que el UI no falle
+                    id: doc.document_id || doc.id,
+                    filename: doc.filename || doc.title || 'Documento sin título',
+                    size: Number.isFinite(doc.size) ? doc.size : 0,
                     type: (doc.type || 'pdf').toLowerCase(),
                     tags: Array.isArray(doc.tags) ? doc.tags : [],
                     description: doc.description || '',
                     owner: doc.owner || '—',
-                    modified_at: doc.modified_at || doc.createdAt,
+                    created_at: doc.created_at || doc.effective_from,
+                    modified_at: doc.modified_at || doc.updated_at || doc.createdAt,
 
                     // compatibilidad de estado
                     status: doc.status === 'indexed' ? 'completed' : doc.status
