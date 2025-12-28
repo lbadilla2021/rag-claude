@@ -1,3 +1,5 @@
+from qdrant_client.models import FieldCondition, Filter, MatchValue
+
 from app.config import QDRANT_COLLECTION
 from app.schemas import AskRequest, AskResponse
 from app.services.openai_service import embed_query, generate_answer
@@ -10,6 +12,18 @@ def preview_rag_hits(question: str, score_threshold: float = 0.25) -> bool:
     results = state.qdrant.search(
         collection_name=QDRANT_COLLECTION,
         query_vector=query_vector,
+        query_filter=Filter(
+            must=[
+                FieldCondition(
+                    key="is_current",
+                    match=MatchValue(value=True),
+                ),
+                FieldCondition(
+                    key="deleted",
+                    match=MatchValue(value=False),
+                ),
+            ]
+        ),
         limit=1,
     )
 
@@ -25,6 +39,18 @@ def ask_rag(payload: AskRequest) -> AskResponse:
     search_results = state.qdrant.search(
         collection_name=QDRANT_COLLECTION,
         query_vector=query_vector,
+        query_filter=Filter(
+            must=[
+                FieldCondition(
+                    key="is_current",
+                    match=MatchValue(value=True),
+                ),
+                FieldCondition(
+                    key="deleted",
+                    match=MatchValue(value=False),
+                ),
+            ]
+        ),
         limit=payload.top_k,
     )
 
