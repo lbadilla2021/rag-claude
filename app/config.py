@@ -1,7 +1,10 @@
 import logging
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://apex_user:apex_password@postgres:5432/apex_rag",
+)
 
 QDRANT_HOST = os.getenv("QDRANT_HOST", "apex-qdrant")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
