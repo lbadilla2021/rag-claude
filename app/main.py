@@ -34,6 +34,9 @@ def startup():
         Base.metadata.create_all(bind=engine)
         with engine.begin() as connection:
             connection.execute(
+                text("CREATE EXTENSION IF NOT EXISTS vector")
+            )
+            connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
@@ -163,6 +166,7 @@ def startup():
             connection.execute(
                 text(
                     "DO $$\n"
+                    "DECLARE pk_name text;\n"
                     "BEGIN\n"
                     "  IF NOT EXISTS (\n"
                     "    SELECT 1 FROM information_schema.columns\n"
@@ -198,6 +202,30 @@ def startup():
                     "      UPDATE documents\n"
                     "      SET id = gen_random_uuid()\n"
                     "      WHERE id IS NULL;\n"
+                    "    ELSE\n"
+                    "      UPDATE documents\n"
+                    "      SET document_id = COALESCE(NULLIF(document_id, ''), id::text)\n"
+                    "      WHERE (document_id IS NULL OR document_id = '')\n"
+                    "        AND id IS NOT NULL;\n"
+                    "      SELECT conname INTO pk_name\n"
+                    "      FROM pg_constraint\n"
+                    "      WHERE conrelid = 'documents'::regclass AND contype = 'p'\n"
+                    "      LIMIT 1;\n"
+                    "      IF pk_name IS NOT NULL THEN\n"
+                    "        EXECUTE format('ALTER TABLE documents DROP CONSTRAINT %I', pk_name);\n"
+                    "      END IF;\n"
+                    "      ALTER TABLE documents ADD COLUMN id_tmp BIGSERIAL;\n"
+                    "      CREATE SEQUENCE IF NOT EXISTS documents_id_seq;\n"
+                    "      ALTER SEQUENCE documents_id_seq OWNED BY documents.id_tmp;\n"
+                    "      ALTER TABLE documents ALTER COLUMN id_tmp SET DEFAULT nextval('documents_id_seq');\n"
+                    "      PERFORM setval('documents_id_seq', COALESCE((SELECT MAX(id_tmp) FROM documents), 0));\n"
+                    "      UPDATE documents\n"
+                    "      SET id_tmp = nextval('documents_id_seq')\n"
+                    "      WHERE id_tmp IS NULL;\n"
+                    "      ALTER TABLE documents DROP COLUMN id;\n"
+                    "      ALTER TABLE documents RENAME COLUMN id_tmp TO id;\n"
+                    "      ALTER SEQUENCE documents_id_seq OWNED BY documents.id;\n"
+                    "      ALTER TABLE documents ALTER COLUMN id SET NOT NULL;\n"
                     "    END IF;\n"
                     "  END IF;\n"
                     "  IF NOT EXISTS (\n"
@@ -268,6 +296,36 @@ def startup():
             )
             connection.execute(
                 text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS change_summary TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_hash VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS effective_from TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS effective_to TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
                     "ALTER TABLE IF EXISTS document_chunks "
                     "ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT false"
                 )
@@ -276,6 +334,36 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS document_chunks "
                     "ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT false"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS content TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS embedding vector(1536)"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS chunk_index INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS section VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS created_at TIMESTAMP"
                 )
             )
         logger.info("✅ PostgreSQL listo")
