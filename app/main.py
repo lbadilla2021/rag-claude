@@ -344,8 +344,26 @@ def startup():
             )
             connection.execute(
                 text(
-                    "ALTER TABLE IF EXISTS document_chunks "
-                    "ADD COLUMN IF NOT EXISTS embedding vector(1536)"
+                    "DO $$\n"
+                    "BEGIN\n"
+                    "  IF EXISTS (\n"
+                    "    SELECT 1 FROM information_schema.columns\n"
+                    "    WHERE table_name = 'document_chunks' AND column_name = 'embedding'\n"
+                    "  ) THEN\n"
+                    "    IF EXISTS (\n"
+                    "      SELECT 1 FROM information_schema.columns\n"
+                    "      WHERE table_name = 'document_chunks'\n"
+                    "        AND column_name = 'embedding'\n"
+                    "        AND udt_name = 'vector'\n"
+                    "    ) THEN\n"
+                    "      ALTER TABLE document_chunks\n"
+                    "      ALTER COLUMN embedding TYPE JSONB\n"
+                    "      USING embedding::text::jsonb;\n"
+                    "    END IF;\n"
+                    "  ELSE\n"
+                    "    ALTER TABLE document_chunks ADD COLUMN embedding JSONB;\n"
+                    "  END IF;\n"
+                    "END $$;"
                 )
             )
             connection.execute(
