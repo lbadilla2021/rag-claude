@@ -34,6 +34,9 @@ def startup():
         Base.metadata.create_all(bind=engine)
         with engine.begin() as connection:
             connection.execute(
+                text("CREATE EXTENSION IF NOT EXISTS vector")
+            )
+            connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
@@ -293,6 +296,36 @@ def startup():
             )
             connection.execute(
                 text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS change_summary TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS file_hash VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS effective_from TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_versions "
+                    "ADD COLUMN IF NOT EXISTS effective_to TIMESTAMP"
+                )
+            )
+            connection.execute(
+                text(
                     "ALTER TABLE IF EXISTS document_chunks "
                     "ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT false"
                 )
@@ -301,6 +334,36 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS document_chunks "
                     "ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT false"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS content TEXT"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS embedding vector(1536)"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS chunk_index INTEGER NOT NULL DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS section VARCHAR"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE IF EXISTS document_chunks "
+                    "ADD COLUMN IF NOT EXISTS created_at TIMESTAMP"
                 )
             )
         logger.info("✅ PostgreSQL listo")
