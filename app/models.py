@@ -1,4 +1,3 @@
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 
 from app.db import Base
@@ -55,7 +54,6 @@ class DocumentChunk(Base):
     document_id = Column(String, nullable=False)
     version_id = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    embedding = Column(Vector(1536))
     chunk_index = Column(Integer, nullable=False)
     section = Column(String)
     is_current = Column(Boolean, nullable=False, default=False)

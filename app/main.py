@@ -34,9 +34,6 @@ def startup():
         Base.metadata.create_all(bind=engine)
         with engine.begin() as connection:
             connection.execute(
-                text("CREATE EXTENSION IF NOT EXISTS vector")
-            )
-            connection.execute(
                 text(
                     "ALTER TABLE IF EXISTS documents "
                     "ADD COLUMN IF NOT EXISTS filename VARCHAR NOT NULL DEFAULT ''"
@@ -340,12 +337,6 @@ def startup():
                 text(
                     "ALTER TABLE IF EXISTS document_chunks "
                     "ADD COLUMN IF NOT EXISTS content TEXT"
-                )
-            )
-            connection.execute(
-                text(
-                    "ALTER TABLE IF EXISTS document_chunks "
-                    "ADD COLUMN IF NOT EXISTS embedding vector(1536)"
                 )
             )
             connection.execute(
